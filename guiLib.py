@@ -79,19 +79,22 @@ class ScrolledCanvas(Frame):
         pass              
 
 class ScrolledList(Frame):
-    def __init__(self, options, bindings={}, parent=None):
+    """
+        ScrolledList. Inherit from me and define start method
+        to define any bindings to Listbox items or packoptions for
+        ScrolledList itself
+    """
+    def __init__(self, items, parent=None):
         Frame.__init__(self, parent)
-        self.start(bindings, packoptions=None)
-        self.makeWidgets(options)
+        self.start()
+        self.makeWidgets(items)
+        self.pack(self.packopt)
 
-    def start(self, bindings={}, packoptions=None):
-        self.bindings = bindings
-        if not packoptions:
-            self.pack(side=LEFT, expand=YES, fill=BOTH)
-        else:
-            self.pack(packoptions)
+    def start(self):
+        self.bindings = None
+        self.packopt = {}
 
-    def makeWidgets(self, options):
+    def makeWidgets(self, items):
         sbar = Scrollbar(self)
         lst = Listbox(self, relief=SUNKEN)
         self.listbox = lst
@@ -99,13 +102,12 @@ class ScrolledList(Frame):
         lst.config(yscrollcommand=sbar.set)
         sbar.pack(side=RIGHT, fill=BOTH)
         lst.pack(side=LEFT, expand=YES, fill=BOTH)
-        pos = 0
-        for label in options:
+        for pos, label in enumerate(items):
             lst.insert(pos, label)
-            pos += 1
         lst.selection_set(0)
-        for event_name, func in self.bindings.items():
-            lst.bind(event_name, func)
+        if self.bindings:
+            for event_name, func in self.bindings.items():
+                lst.bind(event_name, func)
 
 class ScrolledMemberList(Frame):
     """
