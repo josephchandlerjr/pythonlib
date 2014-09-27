@@ -1,6 +1,16 @@
+"""
+###############################################################################
+a "mixin" class for other frames: common methods for canned dialogs,
+spawning programs, simple text viewers, etc; this class must be mixed
+with a Frame (or a subclass derived from Frame) for its quit method
+###############################################################################
+"""
+
 from tkinter import *
+from tkinter.scrolledtext import ScrolledText
 from tkinter.messagebox import *
 from tkinter.filedialog import *
+from launchmodes import PortableLauncher, System
 
 class GuiMixin:
     def infobox(self, title, text, *args):              # use standard dialogs
@@ -23,6 +33,12 @@ class GuiMixin:
     def help(self):
         self.infobox('RTFM', 'See figure 1...')         # override this better
 
+    def spawn(self, pycmdline, wait=False):
+        if not wait:
+            PortableLauncher(pycmdline, pycmdline)()
+        else:
+            System(pycmdline, pycmdline)()              #waits until exit
+
     def selectOpenFile(self, file="", dir="."):         # use standard dialogs
         return askopenfilename(initialdir=dir, initialfile=file)
 
@@ -34,8 +50,8 @@ class GuiMixin:
         myclass = self.__class__           # instance's (lowest) class object
         myclass(new, *args)                # attach/run instance to new window
 
-    def browser(self, filename):                         
-        new  = Toplevel()                                
+    def browser(self, filename):                         # if tkinter.scrolledtext
+        new  = Toplevel()                                # included for reference
         text = ScrolledText(new, height=30, width=85)    
         text.config(font=('courier', 10, 'normal'))      
         text.pack(expand=YES, fill=BOTH)
@@ -51,7 +67,9 @@ if __name__ == '__main__':
             self.pack()
             Button(self, text='quit',  command=self.quit).pack(fill=X)
             Button(self, text='help',  command=self.help).pack(fill=X)
-            #Button(self, text='clone', command=self.clone).pack(fill=X)
-            #Button(self, text='spawn', command=self.other).pack(fill=X)
+            Button(self, text='clone', command=self.clone).pack(fill=X)
+            Button(self, text='spawn', command=self.other).pack(fill=X)
 
+        def other(self):
+            self.spawn('guimixin.py')   #spawn self as separate process
     TestMixin().mainloop()

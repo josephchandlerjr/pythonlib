@@ -127,7 +127,7 @@ class QuietPortableLauncher(PortableLauncher):
         pass
 
 def selftest():
-    file = 'launchmodes.py'                    
+    file = '../familyTree/main.py'                    
     input('default mode...')
     launcher = PortableLauncher(file, file)
     launcher()                                             # no block

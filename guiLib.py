@@ -78,35 +78,77 @@ class ScrolledCanvas(Frame):
     def populate(self): # override me
         pass              
 
-class MyListbox(Listbox):
-    'Listbox with a get_selected method'
-    def __init__(self, parent=None, **options):
-        Listbox.__init__(self, parent, **options)
-
-    def get_selected(self):
-        index = self.curselection()
-        return self.get(index)
-
-    def get_selected_right_click(self, event):
-        index = self.nearest(event.y)
-        return self.get(index)
-
 class ScrolledList(Frame):
     def __init__(self, options, bindings={}, parent=None):
         Frame.__init__(self, parent)
-        self.bindings = bindings
-        self.pack(side=LEFT, expand=YES, fill=BOTH)
+        self.start(bindings, packoptions=None)
         self.makeWidgets(options)
+
+    def start(self, bindings={}, packoptions=None):
+        self.bindings = bindings
+        if not packoptions:
+            self.pack(side=LEFT, expand=YES, fill=BOTH)
+        else:
+            self.pack(packoptions)
 
     def makeWidgets(self, options):
         sbar = Scrollbar(self)
-        lst = MyListbox(self, relief=SUNKEN)
+        lst = Listbox(self, relief=SUNKEN)
         self.listbox = lst
         sbar.config(command=lst.yview)
         lst.config(yscrollcommand=sbar.set)
         sbar.pack(side=RIGHT, fill=BOTH)
         lst.pack(side=LEFT, expand=YES, fill=BOTH)
-        for pos, label in enumerate(options):
+        pos = 0
+        for label in options:
             lst.insert(pos, label)
+            pos += 1
         lst.selection_set(0)
-        
+        for event_name, func in self.bindings.items():
+            lst.bind(event_name, func)
+
+class ScrolledMemberList(Frame):
+    """
+     initialized with a instance of Family and a function ondoubleclick 
+     to bind to each item in the ScrolledList instance
+    """
+    def __init__(self, family, bindings={}, parent=None):
+        Frame.__init__(self, parent)
+        Label(self, text='%s family members' % family.lastname, relief=RAISED).pack(fill=X)
+        self.scrolled_list = ScrolledList(family.members.keys(), bindings, self)
+        self.listbox = self.scrolled_list.listbox
+        self.pack(expand=YES, fill=BOTH)
+
+class EntryForm(Toplevel):
+    def __init__(self, fields, person=None):
+        Toplevel.__init__(self)
+        self.variables = {} 
+        self.submit_state = False
+        r = 0
+        for field in fields:
+            label = Label(self, width=20, text=field, relief=RIDGE)
+            entry = Entry(self, relief=SUNKEN)
+            label.grid(row=r, column=0)
+            entry.grid(row=r, column=1)
+            var = StringVar()
+            entry.config(textvariable=var)
+            self.variables[field] = var
+            r += 1
+        if person:                                               #if person already exists, populate
+            for key in fields:
+                try:
+                    self.variables[key].set(getattr(person, key))
+                except AttributeError:
+                    pass
+        Button(self, text='Submit', command=self.submit, relief=RAISED).grid(row=r, column=0)
+        Button(self, text='Forget', command=self.destroy, relief=RAISED).grid(row=r, column=1)
+        self.wait_visibility()
+        self.focus_set()
+        self.grab_set()
+        self.wait_window()
+
+    def submit(self):
+        self.submit_state = True
+        self.destroy()
+
+
